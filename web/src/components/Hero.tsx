@@ -8,7 +8,7 @@ export default function Hero() {
 
       <div className="max-w-[420px] space-y-5">
         <h1 className="text-5xl font-bold leading-tight text-gray-50">
-          Sua capsula do tempo
+          Sua cápsula do tempo
         </h1>
         <p className="text-lg leading-relaxed">
           Colecione momentos marcantes da sua jornada e compartilhe (se quiser)

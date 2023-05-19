@@ -4,6 +4,12 @@ import {
   Roboto_700Bold,
   useFonts,
 } from '@expo-google-fonts/roboto'
+import {
+  DiscoveryDocument,
+  makeRedirectUri,
+  useAuthRequest,
+} from 'expo-auth-session'
+import * as SecureStore from 'expo-secure-store'
 import { StatusBar } from 'expo-status-bar'
 import { styled } from 'nativewind'
 import React from 'react'
@@ -11,8 +17,16 @@ import { ImageBackground, Text, TouchableOpacity, View } from 'react-native'
 import blurBg from './src/assets/bg-blur.png'
 import NLWLogo from './src/assets/nlw-spacetime-logo.svg'
 import Stripes from './src/assets/stripes.svg'
+import { api } from './src/lib/api'
 
 const StyledStripes = styled(Stripes)
+
+const discovery: DiscoveryDocument = {
+  authorizationEndpoint: 'https://github.com/login/oauth/authorize',
+  tokenEndpoint: 'https://github.com/login/oauth/access_token',
+  revocationEndpoint:
+    'https://github.com/settings/connections/applications/b5e2b25e547132cc46cb',
+}
 
 export default function App() {
   const [hasLoadedFonts] = useFonts({
@@ -20,6 +34,27 @@ export default function App() {
     Roboto_700Bold,
     BaiJamjuree_700Bold,
   })
+
+  const [request, response, signInWithGithub] = useAuthRequest(
+    {
+      clientId: 'b5e2b25e547132cc46cb',
+      scopes: ['identity'],
+      redirectUri: makeRedirectUri({ scheme: 'nlwspacetime' }),
+    },
+    discovery,
+  )
+
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { code } = response.params
+      api
+        .post('/register', { code })
+        .then((response) =>
+          SecureStore.setItemAsync('token', response.data.token),
+        )
+        .catch((err) => console.log(err))
+    }
+  }, [response])
 
   if (!hasLoadedFonts) return null
 
@@ -36,7 +71,7 @@ export default function App() {
 
         <View className="space-y-2">
           <Text className="text-center font-title text-2xl leading-tight text-gray-50">
-            Sua capsula do tempo
+            Sua cápsula do tempo
           </Text>
           <Text className="text-center font-body text-base leading-relaxed text-gray-100">
             Colecione momentos marcantes da sua jornada e compartilhe (se
@@ -47,6 +82,7 @@ export default function App() {
         <TouchableOpacity
           className="rounded-full bg-green-500 px-5 py-3"
           activeOpacity={0.7}
+          onPress={() => signInWithGithub()}
         >
           <Text className="font-alt text-sm uppercase text-black">
             Cadastrar lembrança
